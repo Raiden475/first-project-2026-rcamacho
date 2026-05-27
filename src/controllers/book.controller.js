@@ -1,55 +1,106 @@
-import { getConnection } from '../database/database.provider.js';
 import { request, response } from 'express';
+import { AppDataSource } from '../database/data-source.js';
+import { Book } from '../entities/book.entity.js';
 
-const getBook = async (req = request, res = response) => {
-  console.log('Init'); //1
-  const id = req.params?.id;
+const getRepository = () => AppDataSource.getRepository(Book);
+
+const getBooks = async (req = request, res = response) => {
   try {
-    const connection = await getConnection();
-
-    const [books, fields] = await connection.query(
-      'SELECT * FROM books WHERE id = ?',
-      [id],
-    );
-
-    //throw new Error('Error simulado');
-    console.log(books);
-    console.log(fields);
-    console.log(connection); //2 { RESOLVED }
-
-    if (!books[0])
-      res
-        .status(204)
-        .json({ ok: true, message: `No book available with id ${id}` });
-
-    res.status(200).json({ ok: true, data: books[0] });
+    const books = await getRepository().find();
+    return res.status(200).json({ ok: true, data: books });
   } catch (error) {
     console.error(error);
-    res.status(404).json({ ok: false, error });
+    return res.status(500).json({ ok: false, error: error.message });
   }
-  console.log('Finish'); //3
-
-  /*
-  console.log('Init'); //1
-
-  const connection = getConnection();
-  // { Resolve, Rejected }
-
-  console.log(connection); // { Promise: <pending> } 2
-
-  connection //4
-    .then((data) => console.log(data) /** [{ id: 1, name: 'el principito' }] )
-    .catch((err) => console.error(err) /**! Fallo en resolver {err: 'No'}  )
-    .finally(() => console.info('Promise Resolved'));
-
-  console.log('Finish'); // 3
-  */
 };
 
-const getBooks = () => {};
+const getBook = async (req = request, res = response) => {
+  const id = Number(req.params?.id);
 
-const createBook = () => {};
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ ok: false, message: 'ID de libro inválido.' });
+  }
 
-const updateBook = () => {};
+  try {
+    const book = await getRepository().findOneBy({ id });
 
-export const booksController = { getBook };
+    if (!book) {
+      return res.status(404).json({ ok: false, message: `No book available with id ${id}` });
+    }
+
+    return res.status(200).json({ ok: true, data: book });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+};
+
+const createBook = async (req = request, res = response) => {
+  const { title, author, description } = req.body;
+
+  if (!title || !author) {
+    return res.status(400).json({ ok: false, message: 'Title and author are required.' });
+  }
+
+  try {
+    const book = getRepository().create({ title, author, description });
+    await getRepository().save(book);
+    return res.status(201).json({ ok: true, data: book });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+};
+
+const updateBook = async (req = request, res = response) => {
+  const id = Number(req.params?.id);
+  const { title, author, description } = req.body;
+
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ ok: false, message: 'ID de libro inválido.' });
+  }
+
+  try {
+    const repository = getRepository();
+    const book = await repository.findOneBy({ id });
+
+    if (!book) {
+      return res.status(404).json({ ok: false, message: `No book available with id ${id}` });
+    }
+
+    book.title = title ?? book.title;
+    book.author = author ?? book.author;
+    book.description = description ?? book.description;
+
+    await repository.save(book);
+    return res.status(200).json({ ok: true, data: book });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+};
+
+const deleteBook = async (req = request, res = response) => {
+  const id = Number(req.params?.id);
+
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ ok: false, message: 'ID de libro inválido.' });
+  }
+
+  try {
+    const repository = getRepository();
+    const book = await repository.findOneBy({ id });
+
+    if (!book) {
+      return res.status(404).json({ ok: false, message: `No book available with id ${id}` });
+    }
+
+    await repository.remove(book);
+    return res.status(200).json({ ok: true, message: `Book with id ${id} deleted.` });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+};
+
+export const booksController = { getBooks, getBook, createBook, updateBook, deleteBook };
