@@ -1,12 +1,12 @@
 {
   "name": "first-project",
   "version": "1.0.0",
-  "description": "",
+  "description": "API REST con TypeORM y Multer",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
   },
   "keywords": [],
   "author": "",
@@ -16,9 +16,10 @@
     "express": "^5.2.1",
     "joi": "^18.1.2",
     "mysql2": "^3.22.3",
-    "reflect-metadata": "^0.2.2",
-    "signale": "^1.4.0",
-    "typeorm": "^1.0.0"
+    "multer": "^2.0.0",
+    "reflect-metadata": "^0.1.13",
+    "typeorm": "^0.3.19",
+    "uuid": "^11.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

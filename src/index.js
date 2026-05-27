@@ -1,24 +1,33 @@
+import 'reflect-metadata';
 import express from 'express';
+import path from 'path';
 import { config } from 'dotenv';
 import { envs } from './config/envs.js';
-import pkg from 'signale';
-import AppDataSource from './database/datasource.provider.js';
-import bookRoutes from './modules/books/books.route.js';
+import { AppDataSource } from './database/data-source.js';
+import { booksRouter } from './routes/books.route.js';
+import { uploadRouter } from './routes/upload.route.js';
 
-const { Signale } = pkg;
+config();
 
 const app = express();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(process.cwd(), envs.uploads_folder)));
+app.use('/books', booksRouter);
+app.use('/upload', uploadRouter);
 
-app.use(bookRoutes);
-
-app.listen(envs.port, () => {
-  const logger = new Signale({ scope: 'Index' });
-
-  AppDataSource.initialize()
-    .then(() => logger.log('Connected to database'))
-    .catch((err) => logger.error(`Database Error: ${JSON.stringify(err)}`));
-
-  logger.log(`Server on port ${envs.port}`);
+app.get('/', (req, res) => {
+  res.json({ ok: true, message: 'API REST con TypeORM y Multer' });
 });
+
+AppDataSource.initialize()
+  .then(() => {
+    app.listen(envs.port, () => {
+      console.log(`Servidor en el puerto ${envs.port}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Inicio de base de datos fall�:', error);
+    process.exit(1);
+  });
