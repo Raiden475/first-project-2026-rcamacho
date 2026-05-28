@@ -14,18 +14,25 @@ export const bookEntity = new EntitySchema({
     name: {
       type: 'varchar',
       nullable: false,
-      length: 50,
+      length: 100,
     },
     published: {
       type: 'datetime',
       nullable: true,
     },
+    cover: {
+      type: 'varchar',
+      nullable: true,
+      length: 255,
+    },
     createDate: {
       type: 'datetime',
-      createDate: 'NOW',
+      createDate: true,
     },
     deleteDate: {
-      deleteDate: 'NOW',
+      type: 'datetime',
+      nullable: true,
+      deleteDate: true,
     },
   },
 });
